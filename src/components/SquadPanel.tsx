@@ -43,7 +43,9 @@ export default function SquadPanel({ users, onFindFriend }: Props) {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                  <p className="text-xs text-gray-400">Tap to locate</p>
+                  <p className="text-xs text-gray-400">
+                   {user.id === 'me' ? 'Tap to find yourself': 'Tap to locate'}
+                    </p>
                 </div>
                 <div
                   className="w-2 h-2 rounded-full flex-shrink-0"

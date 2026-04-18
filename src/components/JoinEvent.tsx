@@ -1,26 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Props {
   onJoinEvent: (name: string, code: string) => void;
   onCreateInstead: () => void;
+  prefilledCode?: string;
 }
 
-export default function JoinEvent({ onJoinEvent, onCreateInstead }: Props) {
+export default function JoinEvent({ onJoinEvent, onCreateInstead, prefilledCode }: Props) {
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
+
+  useEffect(() => {
+    if (prefilledCode) setCode(prefilledCode);
+  }, [prefilledCode])
 
   const handleJoin = () => {
     if (!name.trim() || !code.trim()) return;
     onJoinEvent(name, code);
   };
 
-  return (
+ return (
     <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-[1000] bg-black/50">
       <div className="bg-white rounded-2xl p-8 w-[90%] max-w-md flex flex-col gap-4">
-        <h1 className="text-2xl font-semibold text-gray-900">Squad Map</h1>
-        <p className="text-gray-500 text-sm">
-          Find your friends at any event in real time
-        </p>
+        <h1 className="text-2xl font-semibold text-gray-900">SquadMap</h1>
+        <p className="text-gray-500 text-sm">Find your friends at any event in real time</p>
 
         <input
           type="text"
@@ -59,5 +62,5 @@ export default function JoinEvent({ onJoinEvent, onCreateInstead }: Props) {
         </button>
       </div>
     </div>
-  );
+  )
 }
