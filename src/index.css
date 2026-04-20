@@ -9,3 +9,6 @@
 .leaflet-control-zoom {
   display: none !important 
 }
+
+.pt-safe-top { padding-top: env(safe-area-inset-top, 1rem); }
+.pb-safe-bottom { padding-bottom: env(safe-area-inset-bottom, 1rem); }

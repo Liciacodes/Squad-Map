@@ -173,7 +173,7 @@ export default function App() {
       {screen === "map" && event && (
         <>
           {/* Event code card - top center */}
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-1000 bg-white rounded-2xl px-6 py-4 shadow-lg flex flex-col items-center gap-1">
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-1000 bg-white rounded-2xl px-6 py-4 shadow-lg flex flex-col items-center gap-1 pt-safe-top">
             <p className="text-xs text-gray-500">You are in</p>
             <h2 className="text-lg font-semibold text-gray-900">
               {event.name}
@@ -252,7 +252,8 @@ export default function App() {
           </button>
 
           {/* Squad panel - bottom */}
-          <SquadPanel
+          <div className="pb-safe-bottom">
+             <SquadPanel
             users={currentUser ? [currentUser, ...users] : users}
             onFindFriend={(user) => {
               if (user.id === "me" && location) {
@@ -268,6 +269,8 @@ export default function App() {
               }
             }}
           />
+          </div>
+         
         </>
       )}
     </div>
