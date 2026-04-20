@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, use } from "react";
+import { useState, useEffect, useRef} from "react";
 import Map from "./components/Map";
 import CreateEvent from "./components/createEvent";
 import JoinEvent from "./components/JoinEvent";
@@ -173,7 +173,7 @@ export default function App() {
       {screen === "map" && event && (
         <>
           {/* Event code card - top center */}
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-white rounded-2xl px-6 py-4 shadow-lg flex flex-col items-center gap-1">
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-1000 bg-white rounded-2xl px-6 py-4 shadow-lg flex flex-col items-center gap-1">
             <p className="text-xs text-gray-500">You are in</p>
             <h2 className="text-lg font-semibold text-gray-900">
               {event.name}
@@ -232,7 +232,7 @@ export default function App() {
                   longitude: location.longitude,
                 });
             }}
-            className="absolute bottom-52 right-4 z-[1000] bg-white rounded-full w-12 h-12 shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
+            className="absolute bottom-52 right-4 z-1000 bg-white rounded-full w-12 h-12 shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
