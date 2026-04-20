@@ -9,13 +9,18 @@ interface Props {
 export default function JoinEvent({ onJoinEvent, onCreateInstead, prefilledCode }: Props) {
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
+  const [error, setError] = useState(""); 
 
   useEffect(() => {
     if (prefilledCode) setCode(prefilledCode);
   }, [prefilledCode])
 
   const handleJoin = () => {
-    if (!name.trim() || !code.trim()) return;
+    if (!name.trim() || !code.trim()) {
+      setError("Please enter both your name and the event code.");
+      return;
+    }
+    setError("");
     onJoinEvent(name, code);
   };
 
@@ -29,15 +34,17 @@ export default function JoinEvent({ onJoinEvent, onCreateInstead, prefilledCode 
           type="text"
           placeholder="Your name"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => {setName(e.target.value); setError("")}}
           className="border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-500"
         />
+
+        {error && <p className="text-red-500 text-sm">{error}</p>}
 
         <input
           type="text"
           placeholder="Event code e.g ABC123"
           value={code}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
+          onChange={(e) => {setCode(e.target.value.toUpperCase()); setError("")}}
           className="border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-500 font-mono tracking-widest"
         />
 

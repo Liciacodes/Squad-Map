@@ -14,8 +14,8 @@ const COLORS = ['#3b82f6','#f59e0b','#ef4444','#8b5cf6','#ec4899']
 
 export default function SquadPanel({ users, onFindFriend }: Props) {
     return (
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000] w-[90%] max-w-md">
-      <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000] w-[90%] max-w-md">
+      <div className="bg-white rounded-2xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">
         <div className="px-4 py-3 border-b border-gray-100">
           <p className="text-sm font-medium text-gray-900">
             Squad · {users.length} {users.length === 1 ? 'person' : 'people'}

@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
+import MapControls from './MapControls'
 
 delete (L.Icon.Default.prototype as any)._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -79,6 +80,8 @@ export default function Map({ users, currentLocation, flyTo }: Props) {
 
         <MapController currentLocation={currentLocation} flyTo={flyTo} />
 
+        <MapControls/>
+
         {currentLocation && (
           <Marker
             position={[currentLocation.latitude, currentLocation.longitude]}
@@ -96,6 +99,22 @@ export default function Map({ users, currentLocation, flyTo }: Props) {
           >
             <Popup>{user.name} 👋</Popup>
           </Marker>
+        ))}
+
+        {currentLocation && users.map((user) => (
+          <Polyline
+            key={`line-${user.id}`}
+            positions={[
+              [currentLocation.latitude, currentLocation.longitude],
+              [user.latitude, user.longitude]
+            ]}
+             pathOptions={{
+              color: '#22c55e',
+              weight: 3,
+              opacity: 1,
+              dashArray: '8, 10'
+            }}
+          />
         ))}
       </MapContainer>
     </div>

@@ -62,7 +62,7 @@ export default function App() {
 
     socket.emit("join-event", {
       eventCode: event.code,
-      eventName: event.name,
+      eventName: event.name || null,
       userName: event.userName,
       latitude: location.latitude,
       longitude: location.longitude,
@@ -100,6 +100,13 @@ export default function App() {
     socket.on("user-left", (id: string) => {
       setUsers((prev) => prev.filter((u) => u.id !== id));
     });
+
+    socket.on("event-not-found", () => {
+      setScreen("home");
+      alert("Event not found. Please check the code and try again.");
+
+      setEvent(null);
+    });
   }, [event, location]);
 
   useEffect(() => {
@@ -112,6 +119,22 @@ export default function App() {
     });
   }, [location]);
 
+  useEffect(() => {
+    if (event) {
+      sessionStorage.setItem("squadmap-event", JSON.stringify(event));
+      sessionStorage.setItem("squadmap-screen", screen);
+    }
+  }, [event, screen]);
+
+  useEffect(() => {
+    const savedEvent = sessionStorage.getItem("squadmap-event");
+    const savedScreen = sessionStorage.getItem("squadmap-screen");
+    if (savedEvent && savedScreen) {
+      setEvent(JSON.parse(savedEvent));
+      setScreen(savedScreen as Screen);
+    }
+  }, []);
+
   const handleCreateEvent = (name: string, code: string, userName: string) => {
     hasJoined.current = false;
     setEvent({ name, code, userName });
@@ -120,7 +143,7 @@ export default function App() {
 
   const handleJoinEvent = (userName: string, code: string) => {
     hasJoined.current = false;
-    setEvent({ name: "Event", code, userName });
+    setEvent({ name: "", code, userName });
     setScreen("map");
   };
 

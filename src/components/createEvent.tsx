@@ -19,7 +19,7 @@ export default function CreateEvent({ onCreateEvent }: Props) {
   };
 
   return (
-    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-[1000] bg-black/50">
+    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-[1000] bg-black/50 px-4">
       <div className="bg-white rounded-2xl p-8 w-[90%] max-w-md flex flex-col gap-4">
         <h1 className="text-2xl font-semibold text-gray-900">Create Event</h1>
         <p className="text-gray-500 text-sm">
