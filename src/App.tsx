@@ -8,6 +8,7 @@ import { useLocation } from "./hooks/useLocation"
 import Landing from "./components/Landing"
 import { useSearchParams } from "react-router-dom"
 import Toast from "./components/Toast"
+import EventTimer from "./components/EventTimer"
 
 type Screen = "landing" | "home" | "create" | "map"
 
@@ -16,6 +17,7 @@ interface EventState {
   code: string
   userName: string
   isCreator: boolean
+  createdAt: number
 }
 
 interface User {
@@ -108,6 +110,7 @@ export default function App() {
         message: "Event not found. Please check the code and try again.",
         type: "error",
       })
+      setJoining(false)
       setEvent(null)
       hasJoined.current = false
       setJoining(false)
@@ -118,6 +121,7 @@ export default function App() {
       sessionStorage.removeItem("squadmap-event")
       sessionStorage.removeItem("squadmap-screen")
       setToast({ message: "The event has ended.", type: "error" })
+      setJoining(false)
       setEvent(null)
       usersRef.current = []
       setUsers([])
@@ -158,7 +162,20 @@ export default function App() {
     })
 
     hasJoined.current = true
-    if (!event.isCreator) setJoining(true)
+    if (!event.isCreator) {
+      setJoining(true)
+    const timer = setTimeout(() => {
+      setJoining((prev) => {
+        if (prev) {
+          setToast({message: 'Finding squad taking too long...', type: 'info'})
+          return false
+        }
+        return false
+      })
+    }, 10000)
+
+    return () => clearTimeout(timer)
+    }
   }, [event, location])
 
   // location updates
@@ -181,14 +198,14 @@ export default function App() {
 
   const handleCreateEvent = (name: string, code: string, userName: string) => {
     hasJoined.current = false
-    setEvent({ name, code, userName, isCreator: true })
+    setEvent({ name, code, userName, isCreator: true , createdAt: Date.now()})
     setScreen("map")
     setJoining(false)
   }
 
-  const handleJoinEvent = (userName: string, code: string) => {
+  const handleJoinEvent = (userName: string, code: string, createdAt: number) => {
     hasJoined.current = false
-    setEvent({ name: "", code, userName, isCreator: false })
+    setEvent({ name: "", code, userName, isCreator: false, createdAt })
     setScreen("map")
   }
 
@@ -287,6 +304,9 @@ export default function App() {
             <p className="text-xs text-gray-400">
               {users.length} friend{users.length !== 1 ? "s" : ""} in this event
             </p>
+
+            {event.createdAt && 
+            <EventTimer createdAt={event.createdAt} />}
 
             <button
               onClick={() => {
