@@ -64,7 +64,7 @@ export default function JoinEvent({ onJoinEvent, onCreateInstead, prefilledCode 
       return; 
     }
     setError("");
-    onJoinEvent(name, code, eventInfo?.createdAt);
+    onJoinEvent(name, code, eventInfo?.createdAt ?? undefined);
   };
 
   return (

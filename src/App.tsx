@@ -205,7 +205,7 @@ export default function App() {
 
   const handleJoinEvent = (userName: string, code: string, createdAt: number) => {
     hasJoined.current = false
-    setEvent({ name: "", code, userName, isCreator: false, createdAt })
+    setEvent({ name: "", code, userName, isCreator: false, createdAt: createdAt ?? Date.now() })
     setScreen("map")
   }
 
