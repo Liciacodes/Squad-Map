@@ -226,7 +226,7 @@ export default function App() {
   }
 
   return (
-    <div className="relative w-screen h-screen">
+    <div className="relative w-screen h-[100dvh] overflow-hidden">
       {joining && (
         <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-[2000] bg-black/60">
           <div className="bg-white rounded-2xl px-8 py-6 flex flex-col items-center gap-3">
