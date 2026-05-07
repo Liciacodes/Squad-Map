@@ -14,7 +14,8 @@ interface User {
   
   export default function SquadPanel({ users, onFindFriend }: Props) {
     return (
-      <div className="absolute bottom-0 left-0 right-0 z-[1000] bg-white rounded-t-2xl shadow-lg pb-safe"  style={{ bottom: 0, paddingBottom: 'env(safe-area-inset-bottom, 16px)' }}>
+      <div className="fixed bottom-0 left-0 right-0 z-[1000] bg-white rounded-t-[24px] shadow-[0_-10px_25px_-5px_rgba(0,0,0,0.1)] "  
+      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}>
         <div className="px-4 py-3 border-b border-gray-100">
           <p className="text-sm font-medium text-gray-900">
             Squad · {users.length} {users.length === 1 ? 'person' : 'people'}

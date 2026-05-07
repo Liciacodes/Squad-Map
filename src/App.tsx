@@ -279,10 +279,10 @@ export default function App() {
 
       {screen === "map" && event && (
         <>
-          <div className="absolute left-0 right-0 z-[1000] bg-white shadow-md px-4 pb-3 flex flex-col gap-1" 
-           style={{ top: 0, paddingTop: 'max(env(safe-area-inset-top), 44px)' }}>
+          <div className="absolute left-1/2 -translate-x-1/2 z-[1000] bg-white shadow-xl p-3  flex flex-col gap-1 w-[92%] max-w-sm" 
+           style={{ top: 'calc(env(safe-area-inset-top) + 12px)' }}>
             <div className="w-full flex items-center justify-between">
-              <p className="text-xs text-gray-500">You are in</p>
+              <p className="text-[10px] text-gray-500">You are in</p>
               <button
                 className="text-xs text-red-400 hover:text-red-600 transition-colors font-medium"
                 onClick={handleLeaveEvent}
@@ -349,7 +349,8 @@ export default function App() {
               if (location)
                 setFlyTo({ latitude: location.latitude, longitude: location.longitude })
             }}
-            className="absolute bottom-52 right-4 z-1000 bg-white rounded-full w-12 h-12 shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
+            className="absolute right-4 z-[1000] bg-white rounded-full w-12 h-12 shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+            style={{ bottom: 'calc(env(safe-area-inset-bottom) + 180px)' }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3" />
