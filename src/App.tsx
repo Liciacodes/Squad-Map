@@ -138,15 +138,26 @@ export default function App() {
     }
   }, [searchParams])
 
-  // restore session
   useEffect(() => {
     const savedEvent = sessionStorage.getItem("squadmap-event")
     const savedScreen = sessionStorage.getItem("squadmap-screen")
     if (savedEvent && savedScreen && savedScreen === "map") {
-      setEvent(JSON.parse(savedEvent))
+      const parsed = JSON.parse(savedEvent)
+      setEvent(parsed)
       setScreen(savedScreen as Screen)
+      // don't re-join automatically on refresh
+      // let the join useEffect handle it fresh
     }
   }, [])
+  // restore session
+  // useEffect(() => {
+  //   const savedEvent = sessionStorage.getItem("squadmap-event")
+  //   const savedScreen = sessionStorage.getItem("squadmap-screen")
+  //   if (savedEvent && savedScreen && savedScreen === "map") {
+  //     setEvent(JSON.parse(savedEvent))
+  //     setScreen(savedScreen as Screen)
+  //   }
+  // }, [])
 
   // join event
   useEffect(() => {
@@ -268,7 +279,8 @@ export default function App() {
 
       {screen === "map" && event && (
         <>
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 z-[1000] pt-safe bg-white rounded-2xl px-4 py-3 shadow-lg flex flex-col items-center gap-1 w-[92%] max-w-sm">
+          <div className="absolute left-0 right-0 z-[1000] bg-white shadow-md px-4 pb-3 flex flex-col gap-1" 
+           style={{ top: 0, paddingTop: 'max(env(safe-area-inset-top), 44px)' }}>
             <div className="w-full flex items-center justify-between">
               <p className="text-xs text-gray-500">You are in</p>
               <button
