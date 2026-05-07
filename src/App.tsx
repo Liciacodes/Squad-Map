@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import Map from "./components/Map"
 import CreateEvent from "./components/createEvent"
 import JoinEvent from "./components/JoinEvent"
-import SquadPanel from "./components/SquadPanel"
+import SquadPanel from './components/SquadPanel'
 import socket from "./hooks/useSocket"
 import { useLocation } from "./hooks/useLocation"
 import Landing from "./components/Landing"
@@ -113,7 +113,6 @@ export default function App() {
       setJoining(false)
       setEvent(null)
       hasJoined.current = false
-      setJoining(false)
       setScreen("home")
     })
 
@@ -203,7 +202,7 @@ export default function App() {
     setJoining(false)
   }
 
-  const handleJoinEvent = (userName: string, code: string, createdAt?: number) => {
+  const handleJoinEvent = (userName: string, code: string, createdAt: number) => {
     hasJoined.current = false
     setEvent({ name: "", code, userName, isCreator: false, createdAt: createdAt ?? Date.now() })
     setScreen("map")
@@ -226,7 +225,7 @@ export default function App() {
   }
 
   return (
-    <div className="relative w-screen h-[100dvh] overflow-hidden">
+    <div className="relative w-screen h-screen">
       {joining && (
         <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-[2000] bg-black/60">
           <div className="bg-white rounded-2xl px-8 py-6 flex flex-col items-center gap-3">
@@ -269,7 +268,7 @@ export default function App() {
 
       {screen === "map" && event && (
         <>
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-white rounded-2xl px-4 py-3 shadow-lg flex flex-col items-center gap-1 w-[92%] max-w-sm">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 z-[1000] pt-safe bg-white rounded-2xl px-4 py-3 shadow-lg flex flex-col items-center gap-1 w-[92%] max-w-sm">
             <div className="w-full flex items-center justify-between">
               <p className="text-xs text-gray-500">You are in</p>
               <button
@@ -338,7 +337,7 @@ export default function App() {
               if (location)
                 setFlyTo({ latitude: location.latitude, longitude: location.longitude })
             }}
-            className="absolute bottom-40 right-4 z-[1000] bg-white rounded-full w-12 h-12 shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
+            className="absolute bottom-52 right-4 z-1000 bg-white rounded-full w-12 h-12 shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3" />

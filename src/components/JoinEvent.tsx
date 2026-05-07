@@ -68,8 +68,8 @@ export default function JoinEvent({ onJoinEvent, onCreateInstead, prefilledCode 
   };
 
   return (
-    <div className="fixed inset-0 overflow-y-auto w-full h-full flex items-center justify-center z-[1000] bg-black/50 px-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md flex flex-col gap-4 my-auto">
+    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-[1000] bg-black/50 px-4">
+      <div className="bg-white rounded-2xl p-8 w-full max-w-md flex flex-col gap-4">
         <h1 className="text-2xl font-semibold text-gray-900">SquadMap</h1>
         <p className="text-gray-500 text-sm">Find your friends at any event in real time</p>
 

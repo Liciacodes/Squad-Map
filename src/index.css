@@ -10,5 +10,12 @@
   display: none !important 
 }
 
-.pt-safe-top { padding-top: env(safe-area-inset-top, 1rem); }
-.pb-safe-bottom { padding-bottom: env(safe-area-inset-bottom, 1rem); }
+/* .pt-safe-top { padding-top: env(safe-area-inset-top, 1rem); }
+.pb-safe-bottom { padding-bottom: env(safe-area-inset-bottom, 1rem); } */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 16px);
+}
