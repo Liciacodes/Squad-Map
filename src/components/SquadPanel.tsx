@@ -88,7 +88,7 @@ export default function SquadPanel({ users, onFindFriend }: Props) {
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col border border-gray-100">
           <div className="px-4 py-3 border-b border-gray-100 bg-white sticky top-0">
             <p className="text-sm font-bold text-gray-900">
-              Squad · <span className="text-green-600">{users.length}</span>
+            Squad · {users.length} {users.length === 1 ? 'person' : 'people'}
             </p>
           </div>
   
@@ -113,9 +113,9 @@ export default function SquadPanel({ users, onFindFriend }: Props) {
                       {user.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-bold text-gray-900">{user.name}</p>
+                      <p className="text-sm font-bold text-gray-900"></p>
                       <p className="text-[10px] text-gray-400 font-medium">
-                        {user.id === 'me' ? 'Find yourself' : 'Locate squad mate'}
+                      {user.id === 'me' ? 'Tap to find yourself' : 'Tap to locate'}
                       </p>
                     </div>
                   </button>

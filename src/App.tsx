@@ -281,7 +281,7 @@ export default function App() {
         <>
           <div className="absolute left-1/2 -translate-x-1/2 z-[1000] bg-white shadow-xl p-3  flex flex-col gap-1 w-[92%] max-w-sm" 
            style={{ top: 'calc(env(safe-area-inset-top) + 12px)' }}>
-            <div className="bg-white shadow-xl rounded-2xl p-3 flex flex-col gap-1 border border-gray-100"></div>
+        
             <div className="w-full flex items-center justify-between">
               <p className="text-[10px] text-gray-500">You are in</p>
               <button
