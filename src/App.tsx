@@ -236,7 +236,7 @@ export default function App() {
   }
 
   return (
-    <div className="fix inset-0 w-full h-[100dvh] overflow-hidden bg-gray-50">
+    <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-gray-50">
       {joining && (
         <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-[2000] bg-black/60">
           <div className="bg-white rounded-2xl px-8 py-6 flex flex-col items-center gap-3">
@@ -352,7 +352,7 @@ export default function App() {
                 setFlyTo({ latitude: location.latitude, longitude: location.longitude })
             }}
             className="absolute right-4 z-[1000] bg-white rounded-full w-12 h-12 shadow-lg flex items-center justify-center active:scale-95 transition-transform"
-            style={{ bottom: 'calc(env(safe-area-inset-bottom) + 180px)' }}
+            style={{ bottom: 'calc(env(safe-area-inset-bottom) + 220px)' }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3" />

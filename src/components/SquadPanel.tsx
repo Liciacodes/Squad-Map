@@ -83,7 +83,7 @@ export default function SquadPanel({ users, onFindFriend }: Props) {
     return (
       <div 
         className="absolute left-1/2 -translate-x-1/2 z-[1000] w-[92%] max-w-sm" 
-        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 80px)' }}
+        style={{  maxHeight: '120px'}}
       >
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col border border-gray-100">
           <div className="px-4 py-3 border-b border-gray-100 bg-white sticky top-0">
