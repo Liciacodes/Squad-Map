@@ -68,7 +68,7 @@ export default function App() {
 
     console.log('🔌 Registering socket listeners')
 
-    socket.on("event-users", (data: { eventName: string; users: User[] } | User[]) => {
+    socket.on("event-users", (data: { eventName: string; users: User[]; createdAt?: number } | User[]) => {
       if (Array.isArray(data)) {
         const filtered = data.filter((u) => u.id !== socket.id)
         usersRef.current = filtered
@@ -78,7 +78,9 @@ export default function App() {
         usersRef.current = filtered
         setUsers(filtered)
         setEvent((prev) =>
-          prev ? { ...prev, name: data.eventName ?? prev.name } : prev
+          prev ? { ...prev, name: data.eventName ?? prev.name, 
+            createdAt: data.createdAt ?? prev.createdAt
+           } : prev
         )
       }
       setJoining(false)
@@ -89,6 +91,7 @@ export default function App() {
       if (usersRef.current.find((u) => u.id === user.id)) return
       usersRef.current = [...usersRef.current, user]
       setUsers([...usersRef.current])
+      setToast({message: `${user.name} just joined 👋 tap to locate`, type: 'info'})
     })
 
     socket.on("user-moved", ({ id, latitude, longitude }: { id: string; latitude: number; longitude: number }) => {
@@ -351,8 +354,8 @@ export default function App() {
               if (location)
                 setFlyTo({ latitude: location.latitude, longitude: location.longitude })
             }}
-            className="absolute right-4 z-[1000] bg-white rounded-full w-12 h-12 shadow-lg flex items-center justify-center active:scale-95 transition-transform"
-            style={{ bottom: 'calc(env(safe-area-inset-bottom) + 220px)' }}
+            className="absolute right-10 z-[1000] bg-white rounded-full w-12 h-12 shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+            style={{ bottom: 'calc(env(safe-area-inset-bottom) + 280px)' }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3" />

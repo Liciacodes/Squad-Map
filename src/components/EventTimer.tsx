@@ -13,7 +13,7 @@ function formatTime(ms: number) {
   return `${mins}m`
 }
 
-export default function EventTimer({ createdAt, expiresAfterMs = 60 * 60 * 1000 }: Props) {
+export default function EventTimer({ createdAt, expiresAfterMs = 60  * 1000 }: Props) {
   const [now, setNow] = useState(Date.now())
 
   useEffect(() => {

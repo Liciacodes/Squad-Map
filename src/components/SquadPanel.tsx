@@ -76,53 +76,60 @@ interface User {
     users: User[]
     onFindFriend: (user: User) => void
   }
- const COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
-
-
-export default function SquadPanel({ users, onFindFriend }: Props) {
+  
+  const COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
+  
+  export default function SquadPanel({ users, onFindFriend }: Props) {
     return (
-      <div 
-        className="absolute left-1/2 -translate-x-1/2 z-[1000] w-[92%] max-w-sm" 
-        style={{  maxHeight: '120px'}}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-[1000] flex justify-center pointer-events-none"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
       >
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col border border-gray-100">
-          <div className="px-4 py-3 border-b border-gray-100 bg-white sticky top-0">
-            <p className="text-sm font-bold text-gray-900">
-            Squad · {users.length} {users.length === 1 ? 'person' : 'people'}
+        <div className="w-[92%] max-w-md bg-white rounded-t-2xl shadow-[0_-10px_25px_-5px_rgba(0,0,0,0.1)] pointer-events-auto overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100">
+            <p className="text-sm font-medium text-gray-900">
+              Squad · {users.length} {users.length === 1 ? 'person' : 'people'}
             </p>
           </div>
   
-          {/* Scrollable container with a fixed max-height (roughly 3-4 people) */}
-          <div className="overflow-y-auto flex-1 overscroll-contain max-h-48 md:max-h-64">
-            {users.length === 0 ? (
-              <div className="px-4 py-8 text-center">
-                <p className="text-sm text-gray-400 font-medium">No one else here yet</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-50">
-                {users.map((user, index) => (
-                  <button
-                    key={user.id}
-                    onClick={() => onFindFriend(user)}
-                    className="w-full flex items-center gap-3 px-4 py-3 active:bg-gray-50 transition-colors text-left"
+          {users.length === 0 ? (
+            <div className="px-4 py-6 text-center">
+              <p className="text-sm text-gray-400">No one else here yet</p>
+              <p className="text-xs text-gray-300 mt-1">Share the event code with your squad</p>
+            </div>
+          ) : (
+            <div className="max-h-48 overflow-y-auto">
+              {users.map((user, index) => (
+                <button
+                  key={user.id}
+                  onClick={() => onFindFriend(user)}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
+                >
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0"
+                    style={{ background: COLORS[index % COLORS.length] }}
                   >
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm"
-                      style={{ background: COLORS[index % COLORS.length] }}
-                    >
-                      {user.name.charAt(0).toUpperCase()}
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                      {user.id === 'me' && (
+                        <span className="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full">You</span>
+                      )}
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-gray-900"></p>
-                      <p className="text-[10px] text-gray-400 font-medium">
+                    <p className="text-xs text-gray-400">
                       {user.id === 'me' ? 'Tap to find yourself' : 'Tap to locate'}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+                    </p>
+                  </div>
+                  <div
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ background: COLORS[index % COLORS.length] }}
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     )
