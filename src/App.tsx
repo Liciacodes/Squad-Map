@@ -348,15 +348,14 @@ export default function App() {
             </button>
             
           </div>
-
           <button
-            onClick={() => {
-              if (location)
-                setFlyTo({ latitude: location.latitude, longitude: location.longitude })
-            }}
-            className="absolute right-10 z-[1000] bg-white rounded-full w-12 h-12 shadow-lg flex items-center justify-center active:scale-95 transition-transform"
-            style={{ bottom: 'calc(env(safe-area-inset-bottom) + 280px)' }}
-          >
+  onClick={() => {
+    if (location)
+      setFlyTo({ latitude: location.latitude, longitude: location.longitude })
+  }}
+  className="absolute right-4 z-[1100] bg-white rounded-full w-12 h-12 shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+  style={{ bottom: '112px' }}
+>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3" />
               <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
