@@ -96,4 +96,4 @@ Event expires → everyone taken back to home screen
 
 - [SquadMap Backend](https://github.com/Liciacodes/Squad-Map-server)
 - [Live App](https://squad-map-kappa.vercel.app)
-- [Case Study](your medium link here)
+- [Case Study](https://medium.com/@udosenfelicia/how-i-built-squadmap-a-real-time-location-sharing-app-for-events-1be75c30b4be)
