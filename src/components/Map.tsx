@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type Ref } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
-import MapControls from './MapControls'
+import { getUserColor, MY_COLOR } from '../utils/userColor'
 
 delete (L.Icon.Default.prototype as any)._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -10,8 +10,6 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 })
-
-const COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
 
 interface User {
   id: string
@@ -25,6 +23,7 @@ interface Props {
   currentLocation: { latitude: number; longitude: number } | null
   flyTo: { latitude: number; longitude: number } | null
   userName: string
+  mapRef?: Ref<L.Map>
 }
 
 const createPulsingIcon = (color: string) => L.divIcon({
@@ -65,13 +64,14 @@ function MapController({ currentLocation, flyTo }: {
   return null
 }
 
-export default function Map({ users, currentLocation, flyTo }: Props) {
+export default function Map({ users, currentLocation, flyTo, mapRef }: Props) {
   return (
     <div className="w-screen h-screen">
       <MapContainer
         center={[6.5244, 3.3792]}
         zoom={13}
         className="w-full h-full"
+        ref={mapRef}
       >
         <TileLayer
           attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -80,22 +80,20 @@ export default function Map({ users, currentLocation, flyTo }: Props) {
 
         <MapController currentLocation={currentLocation} flyTo={flyTo} />
 
-        <MapControls/>
-
         {currentLocation && (
           <Marker
             position={[currentLocation.latitude, currentLocation.longitude]}
-            icon={createPulsingIcon('#22c55e')}
+            icon={createPulsingIcon(MY_COLOR)}
           >
             <Popup>You are here 📍</Popup>
           </Marker>
         )}
 
-        {users.map((user, index) => (
+        {users.map((user) => (
           <Marker
             key={user.id}
             position={[user.latitude, user.longitude]}
-            icon={createPulsingIcon(COLORS[index % COLORS.length])}
+            icon={createPulsingIcon(getUserColor(user.id))}
           >
             <Popup>{user.name} 👋</Popup>
           </Marker>

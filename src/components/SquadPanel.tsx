@@ -65,27 +65,36 @@
 //   }
 
 
+import type { ReactNode } from 'react'
+import { getUserColor } from '../utils/userColor'
+
 interface User {
     id: string
     name: string
     latitude: number
     longitude: number
   }
-  
+
   interface Props {
     users: User[]
     onFindFriend: (user: User) => void
+    controls?: ReactNode
   }
-  
-  const COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
-  
-  export default function SquadPanel({ users, onFindFriend }: Props) {
+
+  export default function SquadPanel({ users, onFindFriend, controls }: Props) {
     return (
       <div
         className="fixed bottom-0 left-0 right-0 z-[1000] flex justify-center pointer-events-none"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
       >
-        <div className="w-[92%] max-w-md bg-white rounded-t-2xl shadow-[0_-10px_25px_-5px_rgba(0,0,0,0.1)] pointer-events-auto overflow-hidden">
+        <div className="relative w-[92%] max-w-md pointer-events-auto">
+          {/* map buttons sit just above the panel and move with its height */}
+          {controls && (
+            <div className="absolute bottom-full left-0 right-0 mb-3 flex items-end justify-between pointer-events-none">
+              {controls}
+            </div>
+          )}
+        <div className="bg-white rounded-t-2xl shadow-[0_-10px_25px_-5px_rgba(0,0,0,0.1)] overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-100">
             <p className="text-sm font-medium text-gray-900">
               Squad · {users.length} {users.length === 1 ? 'person' : 'people'}
@@ -99,7 +108,7 @@ interface User {
             </div>
           ) : (
             <div className="max-h-48 overflow-y-auto">
-              {users.map((user, index) => (
+              {users.map((user) => (
                 <button
                   key={user.id}
                   onClick={() => onFindFriend(user)}
@@ -107,7 +116,7 @@ interface User {
                 >
                   <div
                     className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0"
-                    style={{ background: COLORS[index % COLORS.length] }}
+                    style={{ background: getUserColor(user.id) }}
                   >
                     {user.name.charAt(0).toUpperCase()}
                   </div>
@@ -124,12 +133,13 @@ interface User {
                   </div>
                   <div
                     className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ background: COLORS[index % COLORS.length] }}
+                    style={{ background: getUserColor(user.id) }}
                   />
                 </button>
               ))}
             </div>
           )}
+        </div>
         </div>
       </div>
     )

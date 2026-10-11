@@ -9,7 +9,11 @@ export default function CreateEvent({ onCreateEvent }: Props) {
   const [userName, setUserName] = useState("");
 
   const generateCode = () => {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    return Array.from(
+      { length: 6 },
+      () => chars[Math.floor(Math.random() * chars.length)]
+    ).join("");
   };
 
   const handleCreate = () => {
@@ -28,6 +32,7 @@ export default function CreateEvent({ onCreateEvent }: Props) {
         <input
           type="text"
           placeholder="Your name"
+          maxLength={50}
           value={userName}
           onChange={(e) => setUserName(e.target.value)}
           className="border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-500"
@@ -35,6 +40,7 @@ export default function CreateEvent({ onCreateEvent }: Props) {
         <input
           type="text"
           placeholder="Event name e.g Lagos Fitness Fest"
+          maxLength={80}
           value={eventName}
           onChange={(e) => setEventName(e.target.value)}
           className="border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-500"

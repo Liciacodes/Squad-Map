@@ -1,10 +1,13 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback, useSyncExternalStore } from "react"
+import type { Map as LeafletMap } from "leaflet"
 import Map from "./components/Map"
+import MapControls from "./components/MapControls"
 import CreateEvent from "./components/createEvent"
 import JoinEvent from "./components/JoinEvent"
 import SquadPanel from './components/SquadPanel'
 import socket from "./hooks/useSocket"
 import { useLocation } from "./hooks/useLocation"
+import { distanceMeters } from "./utils/distance"
 import Landing from "./components/Landing"
 import { useSearchParams } from "react-router-dom"
 import Toast from "./components/Toast"
@@ -12,12 +15,26 @@ import EventTimer from "./components/EventTimer"
 
 type Screen = "landing" | "home" | "create" | "map"
 
+const MIN_MOVE_METERS = 5
+const MIN_UPDATE_INTERVAL_MS = 3000
+const JOIN_TIMEOUT_MS = 10000
+
+const subscribeToConnection = (onChange: () => void) => {
+  socket.on("connect", onChange)
+  socket.on("disconnect", onChange)
+  return () => {
+    socket.off("connect", onChange)
+    socket.off("disconnect", onChange)
+  }
+}
+
 interface EventState {
   name: string
   code: string
   userName: string
   isCreator: boolean
   createdAt: number
+  creatorToken?: string
 }
 
 interface User {
@@ -30,6 +47,7 @@ interface User {
 interface ToastMessage {
   message: string
   type: "success" | "error" | "info"
+  userId?: string
 }
 
 export default function App() {
@@ -41,16 +59,29 @@ export default function App() {
   const [flyTo, setFlyTo] = useState<{ latitude: number; longitude: number } | null>(null)
   const [searchParams] = useSearchParams()
   const [prefilledCode, setPrefilledCode] = useState("")
+  const connected = useSyncExternalStore(subscribeToConnection, () => socket.connected)
 
-  const location = useLocation()
+  const { location, error: locationError, retry: retryLocation } = useLocation()
   const hasJoined = useRef(false)
-  const listenersRegistered = useRef(false)
+  const lastSent = useRef<{ latitude: number; longitude: number; time: number } | null>(null)
   const usersRef = useRef<User[]>([])
+  const eventRef = useRef<EventState | null>(null)
+  const locationRef = useRef<{ latitude: number; longitude: number } | null>(null)
+  const mapRef = useRef<LeafletMap | null>(null)
+
+  // stable so the toast timer isn't restarted on every render
+  const closeToast = useCallback(() => setToast(null), [])
 
   // keep usersRef in sync
   useEffect(() => {
     usersRef.current = users
   }, [users])
+
+  // keep event and location readable from the reconnect handler
+  useEffect(() => {
+    eventRef.current = event
+    locationRef.current = location
+  }, [event, location])
 
   const currentUser = event
     ? {
@@ -61,14 +92,29 @@ export default function App() {
       }
     : null
 
-  // register socket listeners once
+  // register socket listeners, removed again on unmount
   useEffect(() => {
-    if (listenersRegistered.current) return
-    listenersRegistered.current = true
 
     console.log('🔌 Registering socket listeners')
 
-    socket.on("event-users", (data: { eventName: string; users: User[]; createdAt?: number } | User[]) => {
+    // a reconnect gets a new socket id, so the server needs a fresh join
+    let connectedBefore = socket.connected
+    const onConnect = () => {
+      if (!connectedBefore) {
+        connectedBefore = true
+        return
+      }
+      if (!hasJoined.current || !eventRef.current || !locationRef.current) return
+      socket.emit("join-event", {
+        eventCode: eventRef.current.code,
+        userName: eventRef.current.userName,
+        latitude: locationRef.current.latitude,
+        longitude: locationRef.current.longitude,
+      })
+      lastSent.current = { ...locationRef.current, time: Date.now() }
+    }
+
+    const onEventUsers = (data: { eventName: string; users: User[]; createdAt?: number } | User[]) => {
       if (Array.isArray(data)) {
         const filtered = data.filter((u) => u.id !== socket.id)
         usersRef.current = filtered
@@ -85,41 +131,64 @@ export default function App() {
       }
       setJoining(false)
       setScreen("map")
-    })
+    }
 
-    socket.on("user-joined", (user: User) => {
+    const onUserJoined = (user: User) => {
       if (usersRef.current.find((u) => u.id === user.id)) return
       usersRef.current = [...usersRef.current, user]
       setUsers([...usersRef.current])
-      setToast({message: `${user.name} just joined 👋 tap to locate`, type: 'info'})
-    })
+      setToast({message: `${user.name} just joined 👋 tap to locate`, type: 'info', userId: user.id})
+    }
 
-    socket.on("user-moved", ({ id, latitude, longitude }: { id: string; latitude: number; longitude: number }) => {
+    const onUserMoved = ({ id, latitude, longitude }: { id: string; latitude: number; longitude: number }) => {
       usersRef.current = usersRef.current.map((u) =>
         u.id === id ? { ...u, latitude, longitude } : u
       )
       setUsers([...usersRef.current])
-    })
+    }
 
-    socket.on("user-left", (id: string, userName: string) => {
+    const onUserLeft = (id: string, userName: string) => {
        setToast({ message: `${userName} has left the event.`, type: "info" })
       console.log("✅ user-left received:", id)
       usersRef.current = usersRef.current.filter((u) => u.id !== id)
       setUsers([...usersRef.current])
-    })
+    }
 
-    socket.on("event-not-found", () => {
+    const onEventCreated = ({ eventCode, creatorToken }: { eventCode: string; creatorToken: string }) => {
+      setEvent((prev) =>
+        prev && prev.code === eventCode ? { ...prev, creatorToken } : prev
+      )
+    }
+
+    const onEventCreateFailed = ({ reason }: { reason: string }) => {
+      sessionStorage.removeItem("squadmap-event")
+      sessionStorage.removeItem("squadmap-screen")
       setToast({
-        message: "Event not found. Please check the code and try again.",
+        message: reason === "code-taken"
+          ? "That event code is already in use. Please try again."
+          : "Could not create the event. Please check the names and try again.",
+        type: "error",
+      })
+      setJoining(false)
+      setEvent(null)
+      hasJoined.current = false
+      setScreen("create")
+    }
+
+    const onEventNotFound = () => {
+      sessionStorage.removeItem("squadmap-event")
+      sessionStorage.removeItem("squadmap-screen")
+      setToast({
+        message: "Event not found. It may have ended, or the code is wrong.",
         type: "error",
       })
       setJoining(false)
       setEvent(null)
       hasJoined.current = false
       setScreen("home")
-    })
+    }
 
-    socket.on("event-ended", () => {
+    const onEventEnded = () => {
       sessionStorage.removeItem("squadmap-event")
       sessionStorage.removeItem("squadmap-screen")
       setToast({ message: "The event has ended.", type: "error" })
@@ -129,7 +198,29 @@ export default function App() {
       setUsers([])
       hasJoined.current = false
       setScreen("home")
-    })
+    }
+
+    socket.on("connect", onConnect)
+    socket.on("event-users", onEventUsers)
+    socket.on("user-joined", onUserJoined)
+    socket.on("user-moved", onUserMoved)
+    socket.on("user-left", onUserLeft)
+    socket.on("event-created", onEventCreated)
+    socket.on("event-create-failed", onEventCreateFailed)
+    socket.on("event-not-found", onEventNotFound)
+    socket.on("event-ended", onEventEnded)
+
+    return () => {
+      socket.off("connect", onConnect)
+      socket.off("event-users", onEventUsers)
+      socket.off("user-joined", onUserJoined)
+      socket.off("user-moved", onUserMoved)
+      socket.off("user-left", onUserLeft)
+      socket.off("event-created", onEventCreated)
+      socket.off("event-create-failed", onEventCreateFailed)
+      socket.off("event-not-found", onEventNotFound)
+      socket.off("event-ended", onEventEnded)
+    }
   }, [])
 
   // prefill code from URL
@@ -166,40 +257,71 @@ export default function App() {
   useEffect(() => {
     if (!event || !location || hasJoined.current) return
 
-    socket.emit("join-event", {
+    const payload = {
       eventCode: event.code,
-      eventName: event.name || null,
       userName: event.userName,
       latitude: location.latitude,
       longitude: location.longitude,
-    })
+    }
+    // the creator's first join creates the event, anything later is a plain join
+    if (event.isCreator && !event.creatorToken) {
+      socket.emit("create-event", { ...payload, eventName: event.name })
+    } else {
+      socket.emit("join-event", payload)
+    }
 
     hasJoined.current = true
-    if (!event.isCreator) {
-      setJoining(true)
-    const timer = setTimeout(() => {
-      setJoining((prev) => {
-        if (prev) {
-          setToast({message: 'Finding squad taking too long...', type: 'info'})
-          return false
-        }
-        return false
-      })
-    }, 10000)
-
-    return () => clearTimeout(timer)
-    }
+    lastSent.current = { ...location, time: Date.now() }
+    // stays on until the server answers with event-users
+    setJoining(true)
   }, [event, location])
 
-  // location updates
+  // give up if the server is reachable but never answers the create or join
   useEffect(() => {
-    if (!event || !location || !hasJoined.current) return
-    socket.emit("location-update", {
-      eventCode: event.code,
-      latitude: location.latitude,
-      longitude: location.longitude,
-    })
-  }, [location, event])
+    if (!joining || !connected) return
+
+    const timer = setTimeout(() => {
+      const wasCreator = eventRef.current?.isCreator
+      sessionStorage.removeItem("squadmap-event")
+      sessionStorage.removeItem("squadmap-screen")
+      setToast({ message: "The server did not respond. Please try again.", type: "error" })
+      setJoining(false)
+      setEvent(null)
+      usersRef.current = []
+      setUsers([])
+      hasJoined.current = false
+      setScreen(wasCreator ? "create" : "home")
+    }, JOIN_TIMEOUT_MS)
+
+    return () => clearTimeout(timer)
+  }, [joining, connected])
+
+  // location updates, only after real movement and at most once per interval
+  const eventCode = event?.code
+  useEffect(() => {
+    if (!eventCode || !location || !hasJoined.current) return
+
+    const last = lastSent.current
+    if (last && distanceMeters(last, location) < MIN_MOVE_METERS) return
+
+    const send = () => {
+      socket.emit("location-update", {
+        eventCode,
+        latitude: location.latitude,
+        longitude: location.longitude,
+      })
+      lastSent.current = { ...location, time: Date.now() }
+    }
+
+    const wait = last ? MIN_UPDATE_INTERVAL_MS - (Date.now() - last.time) : 0
+    if (wait <= 0) {
+      send()
+      return
+    }
+    // too soon, send once the interval is up unless a newer position replaces it
+    const timer = setTimeout(send, wait)
+    return () => clearTimeout(timer)
+  }, [location, eventCode])
 
   // save session
   useEffect(() => {
@@ -223,12 +345,14 @@ export default function App() {
   }
 
   const handleLeaveEvent = () => {
-    if (event?.isCreator) {
-      socket.emit("end-event", { eventCode: event.code })
+    // without a token the event was never confirmed, so just leave
+    if (event?.isCreator && event.creatorToken) {
+      socket.emit("end-event", { eventCode: event.code, creatorToken: event.creatorToken })
     } else {
       socket.emit("leave-event")
     }
     setTimeout(() => {
+    setJoining(false)
     setEvent(null)
     usersRef.current = []
     setUsers([])
@@ -244,7 +368,19 @@ export default function App() {
         <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-[2000] bg-black/60">
           <div className="bg-white rounded-2xl px-8 py-6 flex flex-col items-center gap-3">
             <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-gray-600">Finding your squad...</p>
+            <p className="text-sm text-gray-600">
+              {!connected
+                ? "Connecting to the server..."
+                : event?.isCreator
+                  ? "Creating your event..."
+                  : "Finding your squad..."}
+            </p>
+            <button
+              onClick={handleLeaveEvent}
+              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
@@ -254,13 +390,23 @@ export default function App() {
         currentLocation={location}
         flyTo={flyTo}
         userName={event?.userName ?? "You"}
+        mapRef={mapRef}
       />
 
       {toast && (
         <Toast
           message={toast.message}
           type={toast.type}
-          onClose={() => setToast(null)}
+          onClose={closeToast}
+          onClick={
+            toast.userId
+              ? () => {
+                  const user = users.find((u) => u.id === toast.userId)
+                  if (user) setFlyTo({ latitude: user.latitude, longitude: user.longitude })
+                  setToast(null)
+                }
+              : undefined
+          }
         />
       )}
 
@@ -278,6 +424,36 @@ export default function App() {
 
       {screen === "create" && (
         <CreateEvent onCreateEvent={handleCreateEvent} />
+      )}
+
+      {screen === "map" && event && !location && (
+        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-[1500] bg-black/60 px-4">
+          <div className="bg-white rounded-2xl px-8 py-6 flex flex-col items-center gap-3 w-full max-w-sm text-center">
+            {locationError ? (
+              <>
+                <p className="text-base font-semibold text-gray-900">We need your location</p>
+                <p className="text-sm text-gray-600">{locationError}</p>
+                <button
+                  onClick={retryLocation}
+                  className="w-full bg-green-500 text-white rounded-xl py-3 text-sm font-medium hover:bg-green-600 transition-colors"
+                >
+                  Try again
+                </button>
+                <button
+                  onClick={handleLeaveEvent}
+                  className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  Go back
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm text-gray-600">Getting your location...</p>
+              </>
+            )}
+          </div>
+        </div>
       )}
 
       {screen === "map" && event && (
@@ -348,23 +524,29 @@ export default function App() {
             </button>
             
           </div>
-          <button
-  onClick={() => {
-    if (location)
-      setFlyTo({ latitude: location.latitude, longitude: location.longitude })
-  }}
-  className="absolute right-4 z-[1100] bg-white rounded-full w-12 h-12 shadow-lg flex items-center justify-center active:scale-95 transition-transform"
-  style={{ bottom: '360px' }}
->
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
-              <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
-            </svg>
-          </button>
-
           <SquadPanel
             users={currentUser ? [currentUser, ...users] : users}
+            controls={
+              <>
+                <MapControls
+                  onZoomIn={() => mapRef.current?.zoomIn()}
+                  onZoomOut={() => mapRef.current?.zoomOut()}
+                />
+                <button
+                  onClick={() => {
+                    if (location)
+                      setFlyTo({ latitude: location.latitude, longitude: location.longitude })
+                  }}
+                  className="pointer-events-auto bg-white rounded-full w-12 h-12 shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+                    <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
+                  </svg>
+                </button>
+              </>
+            }
             onFindFriend={(user) => {
               if (user.id === "me" && location) {
                 setFlyTo({ latitude: location.latitude, longitude: location.longitude })

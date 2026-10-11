@@ -37,8 +37,8 @@ export default function JoinEvent({ onJoinEvent, onCreateInstead, prefilledCode 
       setChecking(true)
       try {
         const res = await fetch(`${BACKEND_URL}/event/${code}`)
-        const data = await res.json()
-        setEventInfo(data)
+        // on an error such as a rate limit, skip the preview and let the join itself decide
+        setEventInfo(res.ok ? await res.json() : null)
       } catch {
         setEventInfo(null)
       } finally {
@@ -57,6 +57,7 @@ export default function JoinEvent({ onJoinEvent, onCreateInstead, prefilledCode 
 
     if (code.length !== 6 ) {
       setError('Event code must be 6 characters long.');
+      return;
     }
 
     if (eventInfo && !eventInfo.exists) {
@@ -76,6 +77,7 @@ export default function JoinEvent({ onJoinEvent, onCreateInstead, prefilledCode 
         <input
           type="text"
           placeholder="Your name"
+          maxLength={50}
           value={name}
           onChange={(e) => { setName(e.target.value); setError("") }}
           className="border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-500"

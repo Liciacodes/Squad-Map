@@ -21,7 +21,8 @@ export default function EventTimer({ createdAt, expiresAfterMs = 60 * 60 * 1000 
     return () => clearInterval(interval)
   }, [])
 
-  const elapsed = now - createdAt
+  // now only refreshes every 30s, so it can be slightly behind createdAt
+  const elapsed = Math.max(0, now - createdAt)
   const remaining = expiresAfterMs - elapsed
 
   if (remaining <= 0) return (
