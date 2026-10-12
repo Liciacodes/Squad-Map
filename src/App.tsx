@@ -59,6 +59,8 @@ export default function App() {
   const [flyTo, setFlyTo] = useState<{ latitude: number; longitude: number } | null>(null)
   const [searchParams] = useSearchParams()
   const [prefilledCode, setPrefilledCode] = useState("")
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [cardCollapsed, setCardCollapsed] = useState(false)
   const connected = useSyncExternalStore(subscribeToConnection, () => socket.connected)
 
   const { location, error: locationError, retry: retryLocation } = useLocation()
@@ -166,13 +168,25 @@ export default function App() {
       setToast({
         message: reason === "code-taken"
           ? "That event code is already in use. Please try again."
-          : "Could not create the event. Please check the names and try again.",
+          : reason === "server-full"
+            ? "The server is busy right now. Please try again later."
+            : "Could not create the event. Please check the names and try again.",
         type: "error",
       })
       setJoining(false)
       setEvent(null)
       hasJoined.current = false
       setScreen("create")
+    }
+
+    const onEventFull = () => {
+      sessionStorage.removeItem("squadmap-event")
+      sessionStorage.removeItem("squadmap-screen")
+      setToast({ message: "This event is full.", type: "error" })
+      setJoining(false)
+      setEvent(null)
+      hasJoined.current = false
+      setScreen("home")
     }
 
     const onEventNotFound = () => {
@@ -207,6 +221,7 @@ export default function App() {
     socket.on("user-left", onUserLeft)
     socket.on("event-created", onEventCreated)
     socket.on("event-create-failed", onEventCreateFailed)
+    socket.on("event-full", onEventFull)
     socket.on("event-not-found", onEventNotFound)
     socket.on("event-ended", onEventEnded)
 
@@ -218,6 +233,7 @@ export default function App() {
       socket.off("user-left", onUserLeft)
       socket.off("event-created", onEventCreated)
       socket.off("event-create-failed", onEventCreateFailed)
+      socket.off("event-full", onEventFull)
       socket.off("event-not-found", onEventNotFound)
       socket.off("event-ended", onEventEnded)
     }
@@ -228,7 +244,7 @@ export default function App() {
     const code = searchParams.get("join")
     if (code) {
       setScreen("home")
-      setPrefilledCode(code)
+      setPrefilledCode(code.toUpperCase())
     }
   }, [searchParams])
 
@@ -391,6 +407,7 @@ export default function App() {
         flyTo={flyTo}
         userName={event?.userName ?? "You"}
         mapRef={mapRef}
+        selectedUserId={selectedUserId}
       />
 
       {toast && (
@@ -402,7 +419,10 @@ export default function App() {
             toast.userId
               ? () => {
                   const user = users.find((u) => u.id === toast.userId)
-                  if (user) setFlyTo({ latitude: user.latitude, longitude: user.longitude })
+                  if (user) {
+                    setFlyTo({ latitude: user.latitude, longitude: user.longitude })
+                    setSelectedUserId(user.id)
+                  }
                   setToast(null)
                 }
               : undefined
@@ -461,14 +481,45 @@ export default function App() {
           <div className="absolute left-1/2 -translate-x-1/2 z-[1000] bg-white shadow-xl p-3  flex flex-col gap-1 w-[92%] max-w-sm" 
            style={{ top: 'calc(env(safe-area-inset-top) + 12px)' }}>
         
+            {cardCollapsed ? (
+              <button
+                onClick={() => setCardCollapsed(false)}
+                aria-label="Show event details"
+                className="w-full flex items-center justify-between gap-3 text-left"
+              >
+                <span className="text-sm font-semibold text-gray-900 truncate">
+                  {event.name || "Event"}
+                </span>
+                <span className="flex items-center gap-2 shrink-0">
+                  <span className="text-green-600 font-mono font-bold tracking-widest text-sm">
+                    {event.code}
+                  </span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </span>
+              </button>
+            ) : (
+            <>
             <div className="w-full flex items-center justify-between">
               <p className="text-[10px] text-gray-500">You are in</p>
-              <button
-                className="text-xs text-red-400 hover:text-red-600 transition-colors font-medium"
-                onClick={handleLeaveEvent}
-              >
-                {event.isCreator ? "🔴 End Event" : "👋 Leave Event"}
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  className="text-xs text-red-400 hover:text-red-600 transition-colors font-medium"
+                  onClick={handleLeaveEvent}
+                >
+                  {event.isCreator ? "🔴 End Event" : "👋 Leave Event"}
+                </button>
+                <button
+                  onClick={() => setCardCollapsed(true)}
+                  aria-label="Hide event details"
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="18 15 12 9 6 15" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <h2 className="text-base font-semibold text-gray-900">
@@ -522,6 +573,8 @@ export default function App() {
               </svg>
               Share with squad
             </button>
+            </>
+            )}
             
           </div>
           <SquadPanel
@@ -547,7 +600,11 @@ export default function App() {
                 </button>
               </>
             }
+            myLocation={location}
+            selectedUserId={selectedUserId}
             onFindFriend={(user) => {
+              // picking a friend draws the line to them, picking yourself clears it
+              setSelectedUserId(user.id === "me" ? null : user.id)
               if (user.id === "me" && location) {
                 setFlyTo({ latitude: location.latitude, longitude: location.longitude })
               } else {

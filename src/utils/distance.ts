@@ -16,3 +16,9 @@ export function distanceMeters(a: Point, b: Point) {
     Math.cos(toRadians(a.latitude)) * Math.cos(toRadians(b.latitude)) * Math.sin(dLng / 2) ** 2
   return 2 * EARTH_RADIUS_METERS * Math.asin(Math.sqrt(h))
 }
+
+// 120 -> "120 m", 1530 -> "1.5 km"
+export function formatDistance(meters: number) {
+  if (meters < 1000) return `${Math.round(meters)} m`
+  return `${(meters / 1000).toFixed(1)} km`
+}

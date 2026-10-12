@@ -67,6 +67,7 @@
 
 import type { ReactNode } from 'react'
 import { getUserColor } from '../utils/userColor'
+import { distanceMeters, formatDistance } from '../utils/distance'
 
 interface User {
     id: string
@@ -79,9 +80,11 @@ interface User {
     users: User[]
     onFindFriend: (user: User) => void
     controls?: ReactNode
+    myLocation: { latitude: number; longitude: number } | null
+    selectedUserId: string | null
   }
 
-  export default function SquadPanel({ users, onFindFriend, controls }: Props) {
+  export default function SquadPanel({ users, onFindFriend, controls, myLocation, selectedUserId }: Props) {
     return (
       <div
         className="fixed bottom-0 left-0 right-0 z-[1000] flex justify-center pointer-events-none"
@@ -112,7 +115,9 @@ interface User {
                 <button
                   key={user.id}
                   onClick={() => onFindFriend(user)}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
+                  className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left ${
+                    user.id === selectedUserId ? 'bg-green-50' : 'hover:bg-gray-50'
+                  }`}
                 >
                   <div
                     className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0"
@@ -128,7 +133,11 @@ interface User {
                       )}
                     </div>
                     <p className="text-xs text-gray-400">
-                      {user.id === 'me' ? 'Tap to find yourself' : 'Tap to locate'}
+                      {user.id === 'me'
+                        ? 'Tap to find yourself'
+                        : myLocation
+                          ? `${formatDistance(distanceMeters(myLocation, user))} away · tap to locate`
+                          : 'Tap to locate'}
                     </p>
                   </div>
                   <div

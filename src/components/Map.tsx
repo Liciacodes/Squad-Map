@@ -1,4 +1,4 @@
-import { useEffect, useRef, type Ref } from 'react'
+import { memo, useEffect, useRef, type Ref } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
@@ -24,6 +24,7 @@ interface Props {
   flyTo: { latitude: number; longitude: number } | null
   userName: string
   mapRef?: Ref<L.Map>
+  selectedUserId: string | null
 }
 
 const createPulsingIcon = (color: string) => L.divIcon({
@@ -41,6 +42,26 @@ const createPulsingIcon = (color: string) => L.divIcon({
   `,
   iconSize: [20, 20],
   iconAnchor: [10, 10],
+})
+
+// one icon per colour, built once and reused, so a re-render doesn't rebuild every dot
+const iconCache: Record<string, L.DivIcon> = {}
+
+function getPulsingIcon(color: string) {
+  if (!iconCache[color]) iconCache[color] = createPulsingIcon(color)
+  return iconCache[color]
+}
+
+// memo skips re-rendering a friend whose data has not changed
+const FriendMarker = memo(function FriendMarker({ user }: { user: User }) {
+  return (
+    <Marker
+      position={[user.latitude, user.longitude]}
+      icon={getPulsingIcon(getUserColor(user.id))}
+    >
+      <Popup>{user.name} 👋</Popup>
+    </Marker>
+  )
 })
 
 function MapController({ currentLocation, flyTo }: { 
@@ -64,7 +85,9 @@ function MapController({ currentLocation, flyTo }: {
   return null
 }
 
-export default function Map({ users, currentLocation, flyTo, mapRef }: Props) {
+export default function Map({ users, currentLocation, flyTo, mapRef, selectedUserId }: Props) {
+  const selectedUser = users.find((user) => user.id === selectedUserId)
+
   return (
     <div className="w-screen h-screen">
       <MapContainer
@@ -83,37 +106,31 @@ export default function Map({ users, currentLocation, flyTo, mapRef }: Props) {
         {currentLocation && (
           <Marker
             position={[currentLocation.latitude, currentLocation.longitude]}
-            icon={createPulsingIcon(MY_COLOR)}
+            icon={getPulsingIcon(MY_COLOR)}
           >
             <Popup>You are here 📍</Popup>
           </Marker>
         )}
 
         {users.map((user) => (
-          <Marker
-            key={user.id}
-            position={[user.latitude, user.longitude]}
-            icon={createPulsingIcon(getUserColor(user.id))}
-          >
-            <Popup>{user.name} 👋</Popup>
-          </Marker>
+          <FriendMarker key={user.id} user={user} />
         ))}
 
-        {currentLocation && users.map((user) => (
+        {/* one line, from you to the friend picked in the squad list */}
+        {currentLocation && selectedUser && (
           <Polyline
-            key={`line-${user.id}`}
             positions={[
               [currentLocation.latitude, currentLocation.longitude],
-              [user.latitude, user.longitude]
+              [selectedUser.latitude, selectedUser.longitude]
             ]}
              pathOptions={{
-              color: '#22c55e',
+              color: getUserColor(selectedUser.id),
               weight: 3,
               opacity: 1,
               dashArray: '8, 10'
             }}
           />
-        ))}
+        )}
       </MapContainer>
     </div>
   )
