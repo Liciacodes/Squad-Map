@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react'
 
 interface Props {
   createdAt: number
-  expiresAfterMs?: number
+  // sent by the server, the fallback only covers an older server that doesn't send it
+  expiresAt?: number
 }
+
+const DEFAULT_LIFETIME_MS = 60 * 60 * 1000
 
 function formatTime(ms: number) {
   const totalMins = Math.floor(ms / 60000)
@@ -13,8 +16,8 @@ function formatTime(ms: number) {
   return `${mins}m`
 }
 
-export default function EventTimer({ createdAt, expiresAfterMs = 60 * 60 * 1000 }: Props) {
-  const [now, setNow] = useState(Date.now())
+export default function EventTimer({ createdAt, expiresAt }: Props) {
+  const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 30000) // update every 30s
@@ -23,7 +26,7 @@ export default function EventTimer({ createdAt, expiresAfterMs = 60 * 60 * 1000 
 
   // now only refreshes every 30s, so it can be slightly behind createdAt
   const elapsed = Math.max(0, now - createdAt)
-  const remaining = expiresAfterMs - elapsed
+  const remaining = (expiresAt ?? createdAt + DEFAULT_LIFETIME_MS) - now
 
   if (remaining <= 0) return (
     <p className="text-xs text-red-400">Event has expired</p>

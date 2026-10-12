@@ -35,6 +35,7 @@ export default function Toast({ message, type, onClose, onClick }: Props) {
           e.stopPropagation()
           onClose()
         }}
+        aria-label="Dismiss"
         className="text-white text-lg leading-none"
       >
         ×
